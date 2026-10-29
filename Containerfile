@@ -106,7 +106,7 @@ RUN mkdir -p /etc/elemental && \
 # 6. 注入持久化目录初始化脚本与 Systemd 服务 (解决空寻址与桌面失忆)
 # ----------------------------------------------------
 RUN mkdir -p /usr/local/bin && \
-    printf '#!/bin/bash\nPERSISTENT_HOME="/run/elemental/persistent/home/peter"\nPERSISTENT_ROOT="/run/elemental/persistent/root"\nif [ ! -d "$PERSISTENT_HOME" ]; then\n    mkdir -p "$PERSISTENT_HOME/.config/lxqt"\n    mkdir -p "$PERSISTENT_ROOT"\n    cp -a /etc/skel/. "$PERSISTENT_HOME/" || true\n    printf "[General]\\nwindow_manager=labwc\\nleave_confirmation=true\\n\\n[Wayland]\\ncompositor=labwc\\nscreen_locker=swaylock\\n" > "$PERSISTENT_HOME/.config/lxqt/session.conf"\n    chown -R peter:peter "$PERSISTENT_HOME"\nfi\n' > /usr/local/bin/init-persistent-home.sh && \
+    printf '#!/bin/bash\nPERSISTENT_HOME="/run/elemental/persistent/home/peter"\nPERSISTENT_ROOT="/run/elemental/persistent/root"\nif [ ! -d "$PERSISTENT_HOME" ]; then\n    mkdir -p "$PERSISTENT_HOME/.config/lxqt"\n    mkdir -p "$PERSISTENT_HOME/winShare"\n    mkdir -p "$PERSISTENT_ROOT"\n    cp -a /etc/skel/. "$PERSISTENT_HOME/" || true\n    printf "[General]\\nwindow_manager=labwc\\nleave_confirmation=true\\n\\n[Wayland]\\ncompositor=labwc\\nscreen_locker=swaylock\\n" > "$PERSISTENT_HOME/.config/lxqt/session.conf"\n    chown -R peter:peter "$PERSISTENT_HOME"\nfi\n' > /usr/local/bin/init-persistent-home.sh && \
     chmod +x /usr/local/bin/init-persistent-home.sh
 
 RUN printf '[Unit]\nDescription=Initialize Persistent Home Directory structure for Elemental\nDefaultDependencies=no\nAfter=run-elemental-persistent.mount\nBefore=local-fs.target home.mount\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/init-persistent-home.sh\nRemainAfterExit=yes\n\n[Install]\nWantedBy=local-fs.target\n' > /etc/systemd/system/init-persistent-home.service
@@ -140,3 +140,6 @@ RUN echo "IMAGE_REPO=\"${REPO}\"" >> /etc/os-release && \
     echo "IMAGE=\"${REPO}:${VERSION}\"" >> /etc/os-release && \
     echo "TIMESTAMP=\"$(date +'%Y%m%d%H%M%S')\"" >> /etc/os-release && \
     echo "GRUB_ENTRY_NAME=\"my-cli-opensuse-vm\"" >> /etc/os-release
+
+# 将 VMware 共享文件夹固化到开机自动挂载
+RUN echo ".host:/ /home/peter/winShare fuse.vmhgfs-fuse defaults,allow_other,x-systemd.requires=vmtoolsd.service 0 0" >> /etc/fstab
