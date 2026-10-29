@@ -29,9 +29,7 @@ RUN ARCH=$(uname -m); \
     zypper --non-interactive --gpg-auto-import-keys install --no-recommends -- \
         ${ADD_PKGS} \
         at-spi2-core \
-        audit \
         btop \
-        btrfsmaintenance \
         btrfsprogs \
         curl \
         dbus-1-tools \
@@ -44,7 +42,6 @@ RUN ARCH=$(uname -m); \
         featherpad \
         findutils \
         fontconfig \
-        gedit \
         glib2-tools \
         gptfdisk \
         grim \
@@ -52,22 +49,16 @@ RUN ARCH=$(uname -m); \
         grub2-${ARCH}-efi \
         gsettings-desktop-schemas \
         gzip \
-        haveged \
         htop \
         iproute2 \
         kanshi \
-        kate \
         kernel-default \
-        konsole \
         less \
         lvm2 \
-        meld \
         Mesa \
         Mesa-dri \
         mtools \
         NetworkManager \
-        noto-sans-cjk-fonts \
-        openbox \
         openssh-clients \
         openssh-server \
         open-vm-tools \
@@ -80,22 +71,20 @@ RUN ARCH=$(uname -m); \
         rsync \
         sed \
         slurp \
-        snapper \
         squashfs \
         sudo \
         syncthing \
         systemd \
         tar \
-        tilix \
         timezone \
         uv \
         vim \
         which \
         wqy-microhei-fonts \
-        xorriso \
-        xterm-resize && \
+        xorriso && \
     fc-cache -f && \
     zypper clean --all
+
 
 # 4. 基础用户与免密 sudo 配置 (liveuser 与 peter)
 RUN groupadd -f wheel && \
