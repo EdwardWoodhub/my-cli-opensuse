@@ -127,4 +127,26 @@ RUN echo "IMAGE_REPO=\"${REPO}\"" >> /etc/os-release && \
     echo "GRUB_ENTRY_NAME=\"my-cli-opensuse-vm\"" >> /etc/os-release
 
 # 将 VMware 共享文件夹固化到开机自动挂载
-RUN echo ".host:/ /home/peter/winShare fuse.vmhgfs-fuse defaults,allow_other,x-systemd.requires=vmtoolsd.service 0 0" >> /etc/fstab
+# RUN echo ".host:/ /home/peter/winShare fuse.vmhgfs-fuse defaults,allow_other,x-systemd.requires=vmtoolsd.service 0 0" >> /etc/fstab
+
+# 移除原本的 fstab 写入，改用独立的 systemd 挂载服务确保 100% 时序正确
+RUN mkdir -p /etc/systemd/system && \
+    cat <<'EOF' > /etc/systemd/system/mnt-winShare.service
+[Unit]
+Description=Mount VMware Shared Folder (winShare)
+ConditionVirtualization=vmware
+Requires=vmtoolsd.service
+After=vmtoolsd.service network.target local-fs.target
+
+[Service]
+Type=oneshot
+# 即使持久化脚本晚了几秒，这句也能强行兜底建好挂载点
+ExecStartPre=/usr/bin/mkdir -p /home/peter/winShare
+ExecStart=/usr/bin/vmhgfs-fuse .host:/ /home/peter/winShare -o subtype=vmhgfs-fuse,allow_other
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+RUN systemctl enable mnt-winShare.service
