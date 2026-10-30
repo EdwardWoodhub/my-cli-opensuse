@@ -28,7 +28,6 @@ RUN ARCH=$(uname -m); \
     fi; \
     zypper --non-interactive --gpg-auto-import-keys install --no-recommends -- \
         ${ADD_PKGS} \
-        at-spi2-core \
         btop \
         btrfsprogs \
         curl \
@@ -39,38 +38,26 @@ RUN ARCH=$(uname -m); \
         e2fsprogs \
         elemental-toolkit \
         fastfetch \
-        featherpad \
         findutils \
-        fontconfig \
-        glib2-tools \
         gptfdisk \
-        grim \
         grub2 \
         grub2-${ARCH}-efi \
-        gsettings-desktop-schemas \
         gzip \
         htop \
         iproute2 \
-        kanshi \
         kernel-default \
         less \
         lvm2 \
-        Mesa \
-        Mesa-dri \
         mtools \
         NetworkManager \
         openssh-clients \
         openssh-server \
         open-vm-tools \
-        open-vm-tools-desktop \
         parted \
-        pcmanfm-qt \
         podman \
         python3 \
-        qterminal \
         rsync \
         sed \
-        slurp \
         squashfs \
         sudo \
         syncthing \
@@ -80,7 +67,6 @@ RUN ARCH=$(uname -m); \
         uv \
         vim \
         which \
-        wqy-microhei-fonts \
         xorriso && \
     fc-cache -f && \
     zypper clean --all
