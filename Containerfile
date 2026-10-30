@@ -68,7 +68,6 @@ RUN ARCH=$(uname -m); \
         vim \
         which \
         xorriso && \
-    fc-cache -f && \
     zypper clean --all
 
 
