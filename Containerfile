@@ -49,6 +49,7 @@ RUN ARCH=$(uname -m); \
         less \
         lvm2 \
         mtools \
+        nano \
         NetworkManager \
         openssh-clients \
         openssh-server \
@@ -90,8 +91,12 @@ RUN mkdir -p /etc/elemental && \
 # ----------------------------------------------------
 # 6. 注入持久化目录初始化脚本与 Systemd 服务 (解决空寻址与桌面失忆)
 # ----------------------------------------------------
+# RUN mkdir -p /usr/local/bin && \
+#     printf '#!/bin/bash\nPERSISTENT_HOME="/run/elemental/persistent/home/peter"\nPERSISTENT_ROOT="/run/elemental/persistent/root"\nif [ ! -d "$PERSISTENT_HOME" ]; then\n    mkdir -p "$PERSISTENT_HOME/.config/lxqt"\n    mkdir -p "$PERSISTENT_HOME/winShare"\n    mkdir -p "$PERSISTENT_ROOT"\n    cp -a /etc/skel/. "$PERSISTENT_HOME/" || true\n    printf "[General]\\nwindow_manager=labwc\\nleave_confirmation=true\\n\\n[Wayland]\\ncompositor=labwc\\nscreen_locker=swaylock\\n" > "$PERSISTENT_HOME/.config/lxqt/session.conf"\n    chown -R peter:peter "$PERSISTENT_HOME"\nfi\n' > /usr/local/bin/init-persistent-home.sh && \
+#     chmod +x /usr/local/bin/init-persistent-home.sh
+
 RUN mkdir -p /usr/local/bin && \
-    printf '#!/bin/bash\nPERSISTENT_HOME="/run/elemental/persistent/home/peter"\nPERSISTENT_ROOT="/run/elemental/persistent/root"\nif [ ! -d "$PERSISTENT_HOME" ]; then\n    mkdir -p "$PERSISTENT_HOME/.config/lxqt"\n    mkdir -p "$PERSISTENT_HOME/winShare"\n    mkdir -p "$PERSISTENT_ROOT"\n    cp -a /etc/skel/. "$PERSISTENT_HOME/" || true\n    printf "[General]\\nwindow_manager=labwc\\nleave_confirmation=true\\n\\n[Wayland]\\ncompositor=labwc\\nscreen_locker=swaylock\\n" > "$PERSISTENT_HOME/.config/lxqt/session.conf"\n    chown -R peter:peter "$PERSISTENT_HOME"\nfi\n' > /usr/local/bin/init-persistent-home.sh && \
+    printf '#!/bin/bash\nPERSISTENT_HOME="/run/elemental/persistent/home/peter"\nPERSISTENT_ROOT="/run/elemental/persistent/root"\nif [ ! -d "$PERSISTENT_HOME" ]; then\n    mkdir -p "$PERSISTENT_HOME/winShare"\n    mkdir -p "$PERSISTENT_ROOT"\n    cp -a /etc/skel/. "$PERSISTENT_HOME/" || true\n    chown -R peter:peter "$PERSISTENT_HOME"\nfi\n' > /usr/local/bin/init-persistent-home.sh && \
     chmod +x /usr/local/bin/init-persistent-home.sh
 
 RUN printf '[Unit]\nDescription=Initialize Persistent Home Directory structure for Elemental\nDefaultDependencies=no\nAfter=run-elemental-persistent.mount\nBefore=local-fs.target home.mount\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/init-persistent-home.sh\nRemainAfterExit=yes\n\n[Install]\nWantedBy=local-fs.target\n' > /etc/systemd/system/init-persistent-home.service
@@ -109,7 +114,6 @@ RUN systemctl enable init-persistent-home.service
 RUN systemctl enable vmtoolsd.service || systemctl enable open-vm-tools.service || true && \
     systemctl enable NetworkManager.service || true && \
     systemctl enable sshd.service || true && \
-    systemctl enable sddm.service || true && \
     systemd-sysusers || true && \
     mkdir -p /var/tmp /var/log /run/lock /etc/dracut.conf.d /etc/elemental && \
     echo 'hostonly="no"' > /etc/dracut.conf.d/02-generic.conf && \
