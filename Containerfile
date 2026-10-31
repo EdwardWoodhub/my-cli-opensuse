@@ -83,6 +83,23 @@ RUN ARCH=$(uname -m); \
 #     echo 'Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' >> /etc/sudoers
 
 # ----------------------------------------------------
+# 4. 基础用户与免密 sudo 配置 (保留 sudo，注入加盐哈希密码)
+# ----------------------------------------------------
+RUN groupadd -f wheel && \
+    useradd -m -G wheel -s /bin/bash liveuser && \
+    usermod -p '$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.' liveuser && \
+    useradd -m -G wheel -s /bin/bash peter && \
+    usermod -p '$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.' peter && \
+    echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    echo 'Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' >> /etc/sudoers
+
+# ----------------------------------------------------
+# 4c. 彻底锁死 root 密码（Elemental 原生阶段钩子）
+# ----------------------------------------------------
+RUN mkdir -p /system/oem && \
+    printf 'name: "Root Password Enforcer"\nstages:\n  fs.after:\n    - name: "Set root password hash"\n      commands:\n        - usermod -p '\''$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.'\'' root\n' > /system/oem/01_root_pw.yaml
+
+# ----------------------------------------------------
 # 5. 固化 Elemental 分区配置（Btrfs 原生快照）
 # ----------------------------------------------------
 RUN mkdir -p /etc/elemental && \
@@ -121,19 +138,9 @@ RUN systemctl enable vmtoolsd.service || systemctl enable open-vm-tools.service 
     if [ -n "${KERNEL_FILE}" ] && [ ! -e /boot/vmlinuz ]; then \
         ln -sf "${KERNEL_FILE}" /boot/vmlinuz; \
     fi && \
-    elemental --debug init --force && \
-    usermod -p '$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.' root
+    elemental --debug init --force 
 
-# ----------------------------------------------------
-# 4. 基础用户与免密 sudo 配置 (保留 sudo，注入加盐哈希密码)
-# ----------------------------------------------------
-RUN groupadd -f wheel && \
-    useradd -m -G wheel -s /bin/bash liveuser && \
-    usermod -p '$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.' liveuser && \
-    useradd -m -G wheel -s /bin/bash peter && \
-    usermod -p '$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.' peter && \
-    echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
-    echo 'Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' >> /etc/sudoers
+
 
 # 9. 写入元数据至 /etc/os-release
 RUN echo "IMAGE_REPO=\"${REPO}\"" >> /etc/os-release && \
