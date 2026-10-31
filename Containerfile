@@ -73,14 +73,14 @@ RUN ARCH=$(uname -m); \
 
 
 # 4. 基础用户与免密 sudo 配置 (liveuser 与 peter)
-RUN groupadd -f wheel && \
-    useradd -m -G wheel -s /bin/bash liveuser && \
-    echo "liveuser:liveuser" | chpasswd && \
-    useradd -m -G wheel -s /bin/bash peter && \
-    echo "peter:peter" | chpasswd && \
-    echo "root:root" | chpasswd && \
-    echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
-    echo 'Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' >> /etc/sudoers
+# RUN groupadd -f wheel && \
+#     useradd -m -G wheel -s /bin/bash liveuser && \
+#     echo "liveuser:liveuser" | chpasswd && \
+#     useradd -m -G wheel -s /bin/bash peter && \
+#     echo "peter:peter" | chpasswd && \
+#     echo "root:root" | chpasswd && \
+#     echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+#     echo 'Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' >> /etc/sudoers
 
 # ----------------------------------------------------
 # 5. 固化 Elemental 分区配置（Btrfs 原生快照）
@@ -122,6 +122,18 @@ RUN systemctl enable vmtoolsd.service || systemctl enable open-vm-tools.service 
         ln -sf "${KERNEL_FILE}" /boot/vmlinuz; \
     fi && \
     elemental --debug init --force
+
+# ----------------------------------------------------
+# 4. 基础用户与免密 sudo 配置 (保留 sudo，注入加盐哈希密码)
+# ----------------------------------------------------
+RUN groupadd -f wheel && \
+    useradd -m -G wheel -s /bin/bash liveuser && \
+    usermod -p '$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.' liveuser && \
+    useradd -m -G wheel -s /bin/bash peter && \
+    usermod -p '$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.' peter && \
+    usermod -p '$6$3HzcniSmLcqcdDAD$XaGco3Esx69ux6SgsKCac/TWld3/L8ADC1I7eZRtaMvsPfNeb0cb6doyXP2qeyw6DOjVK.BluxZfQcAD/qR6e.' root && \
+    echo "%wheel ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers && \
+    echo 'Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"' >> /etc/sudoers
 
 # 9. 写入元数据至 /etc/os-release
 RUN echo "IMAGE_REPO=\"${REPO}\"" >> /etc/os-release && \
