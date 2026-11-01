@@ -15,8 +15,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  OCI_IMAGE_NAME: my-cli-opensuse-vm
-  ISO_BASE_NAME: my-cli-opensuse-iso
+  OCI_IMAGE_NAME: my-opensuse-cli-vm
+  ISO_BASE_NAME: my-opensuse-cli-iso
 
 jobs:
   build:
